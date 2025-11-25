@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="img/icons/sys-icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/fonts.css">
+
+    <title>ArokenOS '98</title>
+</head>
+
+<!-- <a href='https://t.me/VLADIMIRNABOKOV' target='_blank'>KHRUSHCHEV</a> -->
+
+<body>
+    <!-- ПРЕЛОАДЕР WINDOWS 98 -->
+    <div id="win98-bootloader">
+        <div class="boot-logo">
+            <img src="./video/5431421093291344063-unscreen.gif" alt="ArokenOS '98 Logo">
+        </div>
+
+        <div class="boot-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text">Запуск <span id="OS-Name"></span><span class="dots"></span></div>
+        </div>
+
+        <div class="boot-footer">
+            <div>© 2025 KHRUSHCHEV Corporation. Все дедлайны защищены.</div>
+            <div>BIOS v0.98 • 640 КБ ОЗУ • IDE диск 1.2 ГБ</div>
+        </div>
+    </div>
+    <div class="desktop">
+        <!-- Desktop Icons -->
+        <div class="desktop-icon my-computer" id="desktop-icon" data-app="my-computer">
+            <div><img class="desktop-icon__img" src="./img/icons/computer_2_cool-4.png" alt="my-computer"></div>
+            <div class="icon-title">Мой компьютер</div>
+        </div>
+
+        <div class="desktop-icon recycle-bin" id="desktop-icon" data-app="recycle-bin">
+            <div><img class="desktop-icon__img" src="./img/icons/recycle_bin_empty-4.png" alt="my-computer"></div>
+            <div class="icon-title">Корзина</div>
+        </div>
+
+        <div class="desktop-icon notepad" id="desktop-icon" data-app="notepad">
+            <div><img class="desktop-icon__img" src="./img/icons/notepad-32x32.png" alt="my-computer"></div>
+            <div class="icon-title">Блокнот</div>
+        </div>
+
+        <div class="desktop-icon doom" id="desktop-icon" data-app="doom">
+            <div><img class="desktop-icon__img" src="./img/icons/doomIcon.png" alt="doom"></div>
+            <div class="icon-title">DOOM.EXE</div>
+        </div>
+
+        <div class="desktop-icon freelance" id="desktop-icon" data-app="freelance-simulator">
+            <div><img class="desktop-icon__img" src="./img/icons/Letter_F_orange_35008.png" alt="freelance-simulator"></div>
+            <div class="icon-title">FREELANCE Simulator</div>
+        </div>
+
+        <!-- Add info btn -->
+        <button class="settings-btn" onclick="openApp('about')"><img src="./img/icons/msg_information-2.png"></button>
+
+        <!-- task panel+-->
+        <div class="start-bar">
+            <div class="start-bar__alert-line">
+                <div class="master-volume__help-alert" onclick="volumeHelpAlertClose()">
+                    <div class="control-btn close-btn">×</div>
+                    <img src="./img/icons/msg_information-2.png" alt="information icon">
+                    <p>Чтобы упровлять громкостью звука в <span id="OS-Name"></span>, наведите курсор на значок
+                        динамика, или
+                        кликните.</p>
+                </div>
+            </div>
+            <button class="start-btn" onclick="toggleStartMenu()">
+                <div><img src="./img/icons/windows-4.png" alt="start icon"></div>
+                Start
+            </button>
+            <div class="clock" style="position: relative;" id="master-volume">
+                <div class="master-volume-control">
+                    <div class="master-volume-control__inner">
+                        <input type="range" id="masterVolume" min="0" max="1" step="0.01" value="1">
+                    </div>
+                    <!-- <p>MASTER Volume:</p> -->
+                </div>
+                <div class="master-volume" onclick="toggleVolumeControl()">
+                    <img src="./img/icons/audio-okay-16x16.png" alt="volume-btn-icon">
+                </div>
+                <div id="clock">12:00 PM</div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="./js/app.js"></script>
+    <script src="./js/masterSoundVolume.js"></script>
+    <!-- <script src="./js/main.js"></script> -->
+</body>
+
+</html>
