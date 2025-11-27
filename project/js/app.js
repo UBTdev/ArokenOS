@@ -290,7 +290,7 @@ const ArokenOS = {
 
         win.innerHTML = `
             <div class="title-bar">
-                <div class="title-icon"><img src="${icon}" width="16" height="16" alt="${title}"></div>
+                <div class="title-icon"><img src="${icon}" width="16" height="16" alt="window-icon"></div>
                 <div class="title-text">${title}</div>
                 <div class="window-controls">
                     <div class="control-btn minimize-btn">_</div>
