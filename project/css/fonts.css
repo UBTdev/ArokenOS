@@ -1,0 +1,84 @@
+@font-face {
+    font-family: 'Microsoft Sans Serif';
+    src: url('./../fonts/');
+    src: url('./../fonts/?#iefix') format('embedded-opentype'),
+        url('./../fonts/MicrosoftSansSerif.woff2') format('woff2'),
+        url('./../fonts/MicrosoftSansSerif.woff') format('woff'),
+        url('./../fonts/MicrosoftSansSerif.svg#MicrosoftSansSerif') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Handjet';
+    src: url('./../fonts/Handjet-Bold.eot');
+    src: url('./../fonts/Handjet-Bold.eot?#iefix') format('embedded-opentype'),
+        url('./../fonts/Handjet-Bold.woff2') format('woff2'),
+        url('./../fonts/Handjet-Bold.woff') format('woff'),
+        url('./../fonts/Handjet-Bold.svg#Handjet-Bold') format('svg');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Handjet';
+    src: url('./../fonts/Handjet-Light.eot');
+    src: url('./../fonts/Handjet-Light.eot?#iefix') format('embedded-opentype'),
+        url('./../fonts/Handjet-Light.woff2') format('woff2'),
+        url('./../fonts/Handjet-Light.woff') format('woff'),
+        url('./../fonts/Handjet-Light.svg#Handjet-Light') format('svg');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Handjet';
+    src: url('./../fonts/Handjet-SemiBold.eot');
+    src: url('./../fonts/Handjet-SemiBold.eot?#iefix') format('embedded-opentype'),
+        url('./../fonts/Handjet-SemiBold.woff2') format('woff2'),
+        url('./../fonts/Handjet-SemiBold.woff') format('woff'),
+        url('./../fonts/Handjet-SemiBold.svg#Handjet-SemiBold') format('svg');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Press Start 2P';
+    src: url('./../fonts/PressStart2P-Regular.eot');
+    src: url('./../fonts/PressStart2P-Regular.eot?#iefix') format('embedded-opentype'),
+        url('./../fonts/PressStart2P-Regular.woff2') format('woff2'),
+        url('./../fonts/PressStart2P-Regular.woff') format('woff'),
+        url('./../fonts/PressStart2P-Regular.svg#PressStart2P-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Handjet';
+    src: url('./../fonts/Handjet-Regular.eot');
+    src: url('./../fonts/Handjet-Regular.eot?#iefix') format('embedded-opentype'),
+        url('./../fonts/Handjet-Regular.woff2') format('woff2'),
+        url('./../fonts/Handjet-Regular.woff') format('woff'),
+        url('./../fonts/Handjet-Regular.svg#Handjet-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Handjet';
+    src: url('./../fonts/Handjet-Medium.eot');
+    src: url('./../fonts/Handjet-Medium.eot?#iefix') format('embedded-opentype'),
+        url('./../fonts/Handjet-Medium.woff2') format('woff2'),
+        url('./../fonts/Handjet-Medium.woff') format('woff'),
+        url('./../fonts/Handjet-Medium.svg#Handjet-Medium') format('svg');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+

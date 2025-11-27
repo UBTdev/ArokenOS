@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фриланс Симулятор: Погаси долг!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            image-rendering: pixelated;
+        }
+
+        body {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Статус бар */
+        #status-bar {
+            background-color: #34495e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 3px solid #1a252f;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .stat-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 5px;
+            background-color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .stat-bar {
+            width: 100px;
+            height: 16px;
+            background-color: #2c3e50;
+            border: 2px solid #1a252f;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #hp-fill {
+            background-color: #e74c3c;
+            width: 80%;
+        }
+
+        #energy-fill {
+            background-color: #f1c40f;
+            width: 70%;
+        }
+
+        #sleep-fill {
+            background-color: #3498db;
+            width: 50%;
+        }
+
+        #xp-fill {
+            background-color: #2ecc71;
+            width: 30%;
+        }
+
+        #money {
+            color: #f1c40f;
+            font-weight: bold;
+        }
+
+        #debt {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .buff {
+            display: inline-block;
+            padding: 2px 6px;
+            margin-left: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .burnout {
+            background-color: #e67e22;
+        }
+
+        .caffeine {
+            background-color: #9b59b6;
+        }
+
+        /* Рабочий стол */
+        #desktop {
+            flex-grow: 1;
+            background-color: #1a252f;
+            background-image: linear-gradient(45deg, #1a252f 25%, #1e2a36 25%, #1e2a36 50%, #1a252f 50%, #1a252f 75%, #1e2a36 75%, #1e2a36 100%);
+            background-size: 20px 20px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 20px;
+            position: relative;
+        }
+
+        .desktop-icon {
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .desktop-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .icon-img {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 5px;
+            background-color: #34495e;
+            border: 2px solid #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .icon-label {
+            font-size: 12px;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        /* Окно новеллы */
+        #novel-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 800px;
+            height: 70%;
+            background-color: #2c3e50;
+            border: 4px solid #1a252f;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        #novel-header {
+            background-color: #34495e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1a252f;
+        }
+
+        #close-novel {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        #novel-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .character {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .dialogue {
+            margin-bottom: 15px;
+            min-height: 20px;
+        }
+
+        .typing {
+            border-right: 2px solid #3498db;
+            animation: blink 0.7s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { border-color: transparent; }
+            50% { border-color: #3498db; }
+        }
+
+        #novel-choices {
+            padding: 15px;
+            background-color: #34495e;
+            border-top: 2px solid #1a252f;
+        }
+
+        .choice {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .choice:hover {
+            background-color: #2980b9;
+        }
+
+        .choice-warning {
+            background-color: #e67e22;
+        }
+
+        .choice-warning:hover {
+            background-color: #d35400;
+        }
+
+        .choice-disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+        }
+
+        /* Магазин */
+        #shop-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            max-width: 600px;
+            height: 60%;
+            background-color: #2c3e50;
+            border: 4px solid #1a252f;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        #shop-header {
+            background-color: #34495e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1a252f;
+        }
+
+        #close-shop {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        #shop-content {
+            flex-grow: 1;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .shop-item {
+            background-color: #34495e;
+            border: 2px solid #2c3e50;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .shop-item:hover {
+            transform: scale(1.05);
+            border-color: #3498db;
+        }
+
+        .item-price {
+            color: #f1c40f;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* Портфолио */
+        #portfolio-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            max-width: 600px;
+            height: 60%;
+            background-color: #2c3e50;
+            border: 4px solid #1a252f;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        #portfolio-header {
+            background-color: #34495e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1a252f;
+        }
+
+        #close-portfolio {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        #portfolio-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .portfolio-item {
+            background-color: #34495e;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        /* Окно погашения долга */
+        #debt-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            max-width: 500px;
+            background-color: #2c3e50;
+            border: 4px solid #e74c3c;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        #debt-header {
+            background-color: #34495e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1a252f;
+            margin: -20px -20px 20px -20px;
+        }
+
+        #close-debt {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        #debt-content {
+            margin-bottom: 20px;
+        }
+
+        #debt-payment {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #34495e;
+            border: 2px solid #2c3e50;
+            color: #ecf0f1;
+        }
+
+        #pay-debt {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Game Over */
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            max-width: 500px;
+            background-color: #2c3e50;
+            border: 4px solid #e74c3c;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 20;
+            text-align: center;
+            padding: 30px;
+        }
+
+        #game-over h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        #restart-button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Уведомления */
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+        }
+
+        .notification-error {
+            background-color: #e74c3c !important;
+        }
+
+        .deadline-warning {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .project-item {
+            background-color: #34495e;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .project-item:hover {
+            transform: translateX(5px);
+        }
+
+        .project-requirements {
+            font-size: 12px;
+            color: #bdc3c7;
+            margin-top: 5px;
+        }
+
+        .project-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .project-disabled:hover {
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Статус бар -->
+        <div id="status-bar">
+            <div class="stats-left">
+                <div class="stat">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-bar">
+                        <div id="hp-fill" class="stat-fill"></div>
+                    </div>
+                    <span id="hp-text">80/100</span>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-bar">
+                        <div id="energy-fill" class="stat-fill"></div>
+                    </div>
+                    <span id="energy-text">70/100</span>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon">😴</div>
+                    <div class="stat-bar">
+                        <div id="sleep-fill" class="stat-fill"></div>
+                    </div>
+                    <span id="sleep-text">50/100</span>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-bar">
+                        <div id="xp-fill" class="stat-fill"></div>
+                    </div>
+                    <span id="xp-text">30/100</span>
+                </div>
+            </div>
+            <div class="stats-right">
+                <div class="stat">
+                    <div class="stat-icon">💰</div>
+                    <span id="money">1500</span>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon">💸</div>
+                    <span id="debt">300000</span>
+                </div>
+                <div id="buffs">
+                    <!-- Дебафы и бафы будут добавляться сюда -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Рабочий стол -->
+        <div id="desktop">
+            <div class="desktop-icon" id="freelance-board">
+                <div class="icon-img">📋</div>
+                <div class="icon-label">Биржа фриланса</div>
+            </div>
+            <div class="desktop-icon" id="shop">
+                <div class="icon-img">🛒</div>
+                <div class="icon-label">Магазин</div>
+            </div>
+            <div class="desktop-icon" id="portfolio">
+                <div class="icon-img">📂</div>
+                <div class="icon-label">Портфолио</div>
+            </div>
+            <div class="desktop-icon" id="debt-payment-icon">
+                <div class="icon-img">💳</div>
+                <div class="icon-label">Погасить долг</div>
+            </div>
+            <div class="desktop-icon" id="save-game">
+                <div class="icon-img">💾</div>
+                <div class="icon-label">Сохранить</div>
+            </div>
+            <div class="desktop-icon" id="load-game">
+                <div class="icon-img">📁</div>
+                <div class="icon-label">Загрузить</div>
+            </div>
+        </div>
+
+        <!-- Окно новеллы -->
+        <div id="novel-window">
+            <div id="novel-header">
+                <h3>Биржа фриланса</h3>
+                <button id="close-novel">✕</button>
+            </div>
+            <div id="novel-content">
+                <!-- Контент новеллы будет добавляться сюда -->
+            </div>
+            <div id="novel-choices">
+                <!-- Варианты выбора будут добавляться сюда -->
+            </div>
+        </div>
+
+        <!-- Магазин -->
+        <div id="shop-window">
+            <div id="shop-header">
+                <h3>Магазин</h3>
+                <button id="close-shop">✕</button>
+            </div>
+            <div id="shop-content">
+                <!-- Товары магазина будут добавляться сюда -->
+            </div>
+        </div>
+
+        <!-- Портфолио -->
+        <div id="portfolio-window">
+            <div id="portfolio-header">
+                <h3>Портфолио Макса</h3>
+                <button id="close-portfolio">✕</button>
+            </div>
+            <div id="portfolio-content">
+                <!-- Выполненные проекты будут добавляться сюда -->
+            </div>
+        </div>
+
+        <!-- Окно погашения долга -->
+        <div id="debt-window">
+            <div id="debt-header">
+                <h3>Погашение долга</h3>
+                <button id="close-debt">✕</button>
+            </div>
+            <div id="debt-content">
+                <p>Ваш текущий долг: <span id="current-debt">300000</span> руб.</p>
+                <p>Доступные средства: <span id="available-money">1500</span> руб.</p>
+                <p>Введите сумму для погашения:</p>
+                <input type="number" id="debt-payment" min="0" max="1500" value="0">
+                <button id="pay-debt">Погасить долг</button>
+            </div>
+        </div>
+
+        <!-- Game Over -->
+        <div id="game-over">
+            <h2>ИГРА ОКОНЧЕНА</h2>
+            <p>Вы полностью выгорели и не можете продолжать работу.</p>
+            <p>Весь ваш прогресс будет потерян.</p>
+            <button id="restart-button">Начать заново</button>
+        </div>
+
+        <!-- Уведомление -->
+        <div id="notification"></div>
+    </div>
+
+    <script>
+        // Основные переменные игры
+        const gameState = {
+            playerName: "Макс",
+            hp: 80,
+            maxHp: 100,
+            energy: 70,
+            maxEnergy: 100,
+            sleep: 50,
+            maxSleep: 100,
+            xp: 30,
+            maxXp: 100,
+            money: 1500,
+            debt: 300000,
+            level: 1,
+            burnout: 0, // 0-3 уровня выгорания
+            caffeine: 0,
+            consecutiveWork: 0, // количество выполненных заказов подряд
+            equipment: {
+                computer: 1,
+                chair: 1,
+                monitor: 1
+            },
+            skills: {
+                programming: 1,
+                design: 1,
+                marketing: 1
+            },
+            currentProject: null,
+            portfolio: [],
+            day: 1,
+            debtNotificationShown: false
+        };
+
+        // Элементы DOM
+        const hpFill = document.getElementById('hp-fill');
+        const hpText = document.getElementById('hp-text');
+        const energyFill = document.getElementById('energy-fill');
+        const energyText = document.getElementById('energy-text');
+        const sleepFill = document.getElementById('sleep-fill');
+        const sleepText = document.getElementById('sleep-text');
+        const xpFill = document.getElementById('xp-fill');
+        const xpText = document.getElementById('xp-text');
+        const moneyElement = document.getElementById('money');
+        const debtElement = document.getElementById('debt');
+        const buffsContainer = document.getElementById('buffs');
+        const novelWindow = document.getElementById('novel-window');
+        const novelContent = document.getElementById('novel-content');
+        const novelChoices = document.getElementById('novel-choices');
+        const closeNovel = document.getElementById('close-novel');
+        const shopWindow = document.getElementById('shop-window');
+        const shopContent = document.getElementById('shop-content');
+        const closeShop = document.getElementById('close-shop');
+        const portfolioWindow = document.getElementById('portfolio-window');
+        const portfolioContent = document.getElementById('portfolio-content');
+        const closePortfolio = document.getElementById('close-portfolio');
+        const debtWindow = document.getElementById('debt-window');
+        const currentDebtElement = document.getElementById('current-debt');
+        const availableMoneyElement = document.getElementById('available-money');
+        const debtPaymentInput = document.getElementById('debt-payment');
+        const payDebtButton = document.getElementById('pay-debt');
+        const closeDebt = document.getElementById('close-debt');
+        const debtPaymentIcon = document.getElementById('debt-payment-icon');
+        const gameOverScreen = document.getElementById('game-over');
+        const restartButton = document.getElementById('restart-button');
+        const notification = document.getElementById('notification');
+
+        // Иконки рабочего стола
+        const freelanceBoard = document.getElementById('freelance-board');
+        const shopIcon = document.getElementById('shop');
+        const portfolioIcon = document.getElementById('portfolio');
+        const saveGameIcon = document.getElementById('save-game');
+        const loadGameIcon = document.getElementById('load-game');
+
+        // Переменные для анимации текста
+        let currentTypingInterval = null;
+        let currentScene = null;
+
+        // Инициализация игры
+        function initGame() {
+            updateStats();
+            loadGame(); // Попытка загрузить сохраненную игру
+            setupEventListeners();
+            updateBuffs();
+            
+            // Показываем вступительное сообщение
+            showNotification(`Добро пожаловать, ${gameState.playerName}! У вас долг ${gameState.debt.toLocaleString()} руб. Нужно работать!`, 'info');
+            
+            // Запускаем проверку долга
+            setInterval(checkDebt, 30000); // Проверка каждые 30 секунд
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            freelanceBoard.addEventListener('click', openFreelanceBoard);
+            shopIcon.addEventListener('click', openShop);
+            portfolioIcon.addEventListener('click', openPortfolio);
+            debtPaymentIcon.addEventListener('click', openDebtWindow);
+            saveGameIcon.addEventListener('click', saveGame);
+            loadGameIcon.addEventListener('click', loadGame);
+            closeNovel.addEventListener('click', closeNovelWindow);
+            closeShop.addEventListener('click', closeShopWindow);
+            closePortfolio.addEventListener('click', closePortfolioWindow);
+            closeDebt.addEventListener('click', closeDebtWindow);
+            payDebtButton.addEventListener('click', payDebt);
+            restartButton.addEventListener('click', restartGame);
+            
+            // Обновление максимального значения платежа по долгу
+            debtPaymentInput.addEventListener('input', updateDebtPaymentMax);
+        }
+
+        // Обновление статистики на экране
+        function updateStats() {
+            // Обновление HP
+            const hpPercent = (gameState.hp / gameState.maxHp) * 100;
+            hpFill.style.width = `${hpPercent}%`;
+            hpText.textContent = `${gameState.hp}/${gameState.maxHp}`;
+            
+            // Обновление энергии
+            const energyPercent = (gameState.energy / gameState.maxEnergy) * 100;
+            energyFill.style.width = `${energyPercent}%`;
+            energyText.textContent = `${gameState.energy}/${gameState.maxEnergy}`;
+            
+            // Обновление сна
+            const sleepPercent = (gameState.sleep / gameState.maxSleep) * 100;
+            sleepFill.style.width = `${sleepPercent}%`;
+            sleepText.textContent = `${gameState.sleep}/${gameState.maxSleep}`;
+            
+            // Обновление XP
+            const xpPercent = (gameState.xp / gameState.maxXp) * 100;
+            xpFill.style.width = `${xpPercent}%`;
+            xpText.textContent = `${gameState.xp}/${gameState.maxXp}`;
+            
+            // Обновление денег
+            moneyElement.textContent = gameState.money.toLocaleString();
+            
+            // Обновление долга
+            debtElement.textContent = gameState.debt.toLocaleString();
+            
+            // Обновление баффов/дебаффов
+            updateBuffs();
+        }
+
+        // Обновление баффов и дебаффов
+        function updateBuffs() {
+            buffsContainer.innerHTML = '';
+            
+            if (gameState.burnout > 0) {
+                const burnoutElement = document.createElement('span');
+                burnoutElement.className = 'buff burnout';
+                burnoutElement.textContent = `Выгорание ${gameState.burnout} уровня`;
+                buffsContainer.appendChild(burnoutElement);
+            }
+            
+            if (gameState.caffeine > 0) {
+                const caffeineElement = document.createElement('span');
+                caffeineElement.className = 'buff caffeine';
+                caffeineElement.textContent = `Кофеин: ${gameState.caffeine}`;
+                buffsContainer.appendChild(caffeineElement);
+            }
+        }
+
+        // Открытие биржи фриланса
+        function openFreelanceBoard() {
+            novelWindow.style.display = 'flex';
+            showProjectList();
+        }
+
+        // Показать список проектов
+        function showProjectList() {
+            novelContent.innerHTML = '';
+            novelChoices.innerHTML = '';
+            
+            const header = document.createElement('div');
+            header.className = 'dialogue';
+            header.innerHTML = `<div class="character">Биржа фриланса</div>
+                               <div>Привет, ${gameState.playerName}! Выбери проект для работы. Не забудь следить за уровнем энергии и выгорания!</div>`;
+            novelContent.appendChild(header);
+            
+            // Отображаем доступные проекты
+            projects.forEach(project => {
+                const projectElement = document.createElement('div');
+                projectElement.className = 'project-item';
+                
+                // Проверяем, доступен ли проект по уровню
+                const isLevelSufficient = gameState.level >= project.requiredLevel;
+                const hasEnoughEnergy = gameState.energy >= project.energyCost;
+                
+                if (!isLevelSufficient) {
+                    projectElement.classList.add('project-disabled');
+                }
+                
+                projectElement.innerHTML = `
+                    <h4>${project.name}</h4>
+                    <p>${project.description}</p>
+                    <p><strong>Оплата:</strong> ${project.payment} руб.</p>
+                    <div class="project-requirements">
+                        <p>Требуемый уровень: ${project.requiredLevel} (Ваш: ${gameState.level})</p>
+                        <p>Затраты энергии: ${project.energyCost}</p>
+                        <p>Опыт: +${project.xp} XP</p>
+                    </div>
+                `;
+                
+                if (isLevelSufficient) {
+                    projectElement.addEventListener('click', () => {
+                        startProject(project);
+                    });
+                }
+                
+                novelContent.appendChild(projectElement);
+            });
+            
+            // Добавляем кнопку отдыха
+            const restButton = document.createElement('button');
+            restButton.className = 'choice';
+            restButton.textContent = 'Отдохнуть сегодня';
+            restButton.addEventListener('click', () => {
+                applyEffects({ 
+                    energy: 30, 
+                    sleep: 40, 
+                    hp: 10, 
+                    burnout: -1, 
+                    consecutiveWork: -gameState.consecutiveWork 
+                });
+                showNotification('Вы хорошо отдохнули и восстановили силы!', 'success');
+                closeNovelWindow();
+            });
+            
+            novelChoices.appendChild(restButton);
+        }
+
+        // Начать проект
+        function startProject(project) {
+            // Проверяем, достаточно ли энергии
+            let energyCost = project.energyCost;
+            
+            // Учитываем выгорание (увеличивает затраты энергии)
+            if (gameState.burnout > 0) {
+                const burnoutMultiplier = [1, 1.15, 1.25, 1.5][gameState.burnout];
+                energyCost = Math.floor(energyCost * burnoutMultiplier);
+            }
+            
+            if (gameState.energy < energyCost) {
+                // Недостаточно энергии - предупреждаем, что будет потрачено здоровье
+                const healthCost = energyCost - gameState.energy;
+                if (confirm(`Внимание! У вас недостаточно энергии для этого проекта. Вы потратите ${healthCost} HP вместо недостающей энергии. Продолжить?`)) {
+                    applyEffects({ 
+                        energy: -gameState.energy, 
+                        hp: -healthCost,
+                        money: project.payment,
+                        xp: project.xp,
+                        consecutiveWork: 1
+                    });
+                    
+                    // Добавляем проект в портфолио
+                    addToPortfolio({
+                        name: project.name,
+                        description: project.description,
+                        payment: project.payment
+                    });
+                    
+                    showNotification(`Проект "${project.name}" завершен! Вы получили ${project.payment} руб. и ${project.xp} XP.`, 'success');
+                    closeNovelWindow();
+                }
+            } else {
+                // Достаточно энергии - нормальное выполнение
+                applyEffects({ 
+                    energy: -energyCost, 
+                    money: project.payment,
+                    xp: project.xp,
+                    consecutiveWork: 1
+                });
+                
+                // Добавляем проект в портфолио
+                addToPortfolio({
+                    name: project.name,
+                    description: project.description,
+                    payment: project.payment
+                });
+                
+                showNotification(`Проект "${project.name}" завершен! Вы получили ${project.payment} руб. и ${project.xp} XP.`, 'success');
+                closeNovelWindow();
+            }
+        }
+
+        // Закрытие окна новеллы
+        function closeNovelWindow() {
+            novelWindow.style.display = 'none';
+            // Останавливаем анимацию текста при закрытии окна
+            if (currentTypingInterval) {
+                clearInterval(currentTypingInterval);
+                currentTypingInterval = null;
+            }
+        }
+
+        // Открытие магазина
+        function openShop() {
+            shopWindow.style.display = 'flex';
+            renderShopItems();
+        }
+
+        // Закрытие магазина
+        function closeShopWindow() {
+            shopWindow.style.display = 'none';
+        }
+
+        // Открытие портфолио
+        function openPortfolio() {
+            portfolioWindow.style.display = 'flex';
+            renderPortfolio();
+        }
+
+        // Закрытие портфолио
+        function closePortfolioWindow() {
+            portfolioWindow.style.display = 'none';
+        }
+
+        // Открытие окна погашения долга
+        function openDebtWindow() {
+            debtWindow.style.display = 'flex';
+            currentDebtElement.textContent = gameState.debt.toLocaleString();
+            availableMoneyElement.textContent = gameState.money.toLocaleString();
+            updateDebtPaymentMax();
+        }
+
+        // Закрытие окна погашения долга
+        function closeDebtWindow() {
+            debtWindow.style.display = 'none';
+        }
+
+        // Обновление максимального значения для платежа по долгу
+        function updateDebtPaymentMax() {
+            debtPaymentInput.max = Math.min(gameState.money, gameState.debt);
+            if (parseInt(debtPaymentInput.value) > parseInt(debtPaymentInput.max)) {
+                debtPaymentInput.value = debtPaymentInput.max;
+            }
+        }
+
+        // Погашение долга
+        function payDebt() {
+            const payment = parseInt(debtPaymentInput.value);
+            
+            if (payment <= 0) {
+                showNotification('Введите сумму для погашения!', 'error');
+                return;
+            }
+            
+            if (payment > gameState.money) {
+                showNotification('Недостаточно средств для погашения!', 'error');
+                return;
+            }
+            
+            if (payment > gameState.debt) {
+                showNotification('Сумма платежа превышает размер долга!', 'error');
+                return;
+            }
+            
+            gameState.money -= payment;
+            gameState.debt -= payment;
+            
+            showNotification(`Вы погасили ${payment.toLocaleString()} руб. долга! Остаток: ${gameState.debt.toLocaleString()} руб.`, 'success');
+            
+            // Обновляем отображение
+            updateStats();
+            currentDebtElement.textContent = gameState.debt.toLocaleString();
+            availableMoneyElement.textContent = gameState.money.toLocaleString();
+            updateDebtPaymentMax();
+            
+            // Сбрасываем уведомление о долге, если долг погашен
+            if (gameState.debt === 0) {
+                gameState.debtNotificationShown = false;
+                showNotification('Поздравляем! Вы полностью погасили долг!', 'success');
+            }
+        }
+
+        // Проверка долга (вызывается периодически)
+        function checkDebt() {
+            if (gameState.debt > 0 && !gameState.debtNotificationShown) {
+                // Автоматическое списание в счет долга
+                const autoPayment = Math.min(gameState.money, 15000);
+                
+                if (autoPayment > 0) {
+                    gameState.money -= autoPayment;
+                    gameState.debt -= autoPayment;
+                    gameState.hp -= 15; // Штраф за задолженность
+                    
+                    showNotification(`Автоматическое списание в счет долга: ${autoPayment.toLocaleString()} руб. Штраф: -15 HP.`, 'error');
+                    
+                    updateStats();
+                    
+                    if (gameState.hp <= 0) {
+                        gameState.hp = 0;
+                        gameOver();
+                    }
+                } else {
+                    // Нет денег для списания, но все равно штраф
+                    gameState.hp -= 15;
+                    showNotification('У вас задолженность! Штраф: -15 HP.', 'error');
+                    
+                    updateStats();
+                    
+                    if (gameState.hp <= 0) {
+                        gameState.hp = 0;
+                        gameOver();
+                    }
+                }
+                
+                gameState.debtNotificationShown = true;
+            }
+        }
+
+        // Применение эффектов выбора
+        function applyEffects(effects) {
+            Object.keys(effects).forEach(key => {
+                if (key in gameState) {
+                    gameState[key] += effects[key];
+                    
+                    // Ограничения значений
+                    if (key === 'hp') {
+                        if (gameState.hp > gameState.maxHp) gameState.hp = gameState.maxHp;
+                        if (gameState.hp <= 0) {
+                            gameState.hp = 0;
+                            gameOver();
+                        }
+                    }
+                    
+                    if (key === 'energy' && gameState.energy > gameState.maxEnergy) {
+                        gameState.energy = gameState.maxEnergy;
+                    }
+                    
+                    if (key === 'sleep' && gameState.sleep > gameState.maxSleep) {
+                        gameState.sleep = gameState.maxSleep;
+                    }
+                    
+                    if (key === 'xp' && gameState.xp >= gameState.maxXp) {
+                        levelUp();
+                    }
+                    
+                    if (key === 'consecutiveWork') {
+                        // Обновление уровня выгорания
+                        if (gameState.consecutiveWork >= 3 && gameState.burnout < 3) {
+                            gameState.burnout = Math.min(3, Math.floor(gameState.consecutiveWork / 3));
+                            showNotification(`Уровень выгорания повышен до ${gameState.burnout}!`, 'error');
+                        }
+                    }
+                }
+            });
+            
+            updateStats();
+        }
+
+        // Повышение уровня
+        function levelUp() {
+            gameState.level++;
+            gameState.xp = 0;
+            gameState.maxXp = Math.floor(gameState.maxXp * 1.5);
+            gameState.maxHp += 10;
+            gameState.maxEnergy += 10;
+            gameState.hp = gameState.maxHp;
+            gameState.energy = gameState.maxEnergy;
+            showNotification(`Поздравляем! Вы достигли уровня ${gameState.level}!`, 'success');
+        }
+
+        // Добавление проекта в портфолио
+        function addToPortfolio(project) {
+            gameState.portfolio.push({
+                ...project,
+                day: gameState.day
+            });
+        }
+
+        // Рендер портфолио
+        function renderPortfolio() {
+            portfolioContent.innerHTML = '';
+            
+            if (gameState.portfolio.length === 0) {
+                portfolioContent.innerHTML = '<p>Портфолио пусто. Выполните несколько проектов!</p>';
+                return;
+            }
+            
+            gameState.portfolio.forEach(project => {
+                const projectElement = document.createElement('div');
+                projectElement.className = 'portfolio-item';
+                
+                projectElement.innerHTML = `
+                    <h4>${project.name}</h4>
+                    <p>${project.description}</p>
+                    <p><strong>Оплата:</strong> ${project.payment} руб.</p>
+                    <p><strong>Выполнено:</strong> день ${project.day}</p>
+                `;
+                
+                portfolioContent.appendChild(projectElement);
+            });
+        }
+
+        // Рендер товаров в магазине
+        function renderShopItems() {
+            shopContent.innerHTML = '';
+            
+            shopItems.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'shop-item';
+                
+                const itemName = document.createElement('div');
+                itemName.textContent = item.name;
+                itemElement.appendChild(itemName);
+                
+                const itemDescription = document.createElement('div');
+                itemDescription.style.fontSize = '12px';
+                itemDescription.style.margin = '5px 0';
+                itemDescription.textContent = item.description;
+                itemElement.appendChild(itemDescription);
+                
+                const itemPrice = document.createElement('div');
+                itemPrice.className = 'item-price';
+                itemPrice.textContent = `${item.price} ₽`;
+                itemElement.appendChild(itemPrice);
+                
+                // Проверка, хватает ли денег
+                if (gameState.money < item.price) {
+                    itemElement.style.opacity = '0.5';
+                    itemElement.title = 'Недостаточно денег';
+                } else {
+                    itemElement.addEventListener('click', () => {
+                        buyItem(item);
+                    });
+                }
+                
+                shopContent.appendChild(itemElement);
+            });
+        }
+
+        // Покупка товара
+        function buyItem(item) {
+            if (gameState.money >= item.price) {
+                gameState.money -= item.price;
+                
+                if (item.effect) {
+                    applyEffects(item.effect);
+                }
+                
+                if (item.type === 'equipment') {
+                    gameState.equipment[item.id] = (gameState.equipment[item.id] || 0) + 1;
+                }
+                
+                showNotification(`Вы купили: ${item.name}`, 'success');
+                updateStats();
+                renderShopItems(); // Обновляем магазин
+            } else {
+                showNotification('Недостаточно денег!', 'error');
+            }
+        }
+
+        // Game Over
+        function gameOver() {
+            gameOverScreen.style.display = 'flex';
+        }
+
+        // Перезапуск игры
+        function restartGame() {
+            // Сброс состояния игры
+            Object.assign(gameState, {
+                playerName: "Макс",
+                hp: 80,
+                maxHp: 100,
+                energy: 70,
+                maxEnergy: 100,
+                sleep: 50,
+                maxSleep: 100,
+                xp: 30,
+                maxXp: 100,
+                money: 1500,
+                debt: 300000,
+                level: 1,
+                burnout: 0,
+                caffeine: 0,
+                consecutiveWork: 0,
+                equipment: {
+                    computer: 1,
+                    chair: 1,
+                    monitor: 1
+                },
+                skills: {
+                    programming: 1,
+                    design: 1,
+                    marketing: 1
+                },
+                currentProject: null,
+                portfolio: [],
+                day: 1,
+                debtNotificationShown: false
+            });
+            
+            gameOverScreen.style.display = 'none';
+            updateStats();
+            showNotification('Игра началась заново! Удачи, Макс!', 'info');
+        }
+
+        // Показать уведомление
+        function showNotification(message, type = 'info') {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            // Установка цвета в зависимости от типа
+            if (type === 'error') {
+                notification.className = 'notification-error';
+            } else if (type === 'success') {
+                notification.style.backgroundColor = '#2ecc71';
+            } else {
+                notification.style.backgroundColor = '#3498db';
+            }
+            
+            // Автоматическое скрытие через 3 секунды
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Сохранение игры
+        function saveGame() {
+            localStorage.setItem('freelanceSimulatorSave', JSON.stringify(gameState));
+            showNotification('Игра сохранена!', 'success');
+        }
+
+        // Загрузка игры
+        function loadGame() {
+            const savedGame = localStorage.getItem('freelanceSimulatorSave');
+            if (savedGame) {
+                try {
+                    const parsedGame = JSON.parse(savedGame);
+                    Object.assign(gameState, parsedGame);
+                    updateStats();
+                    showNotification('Игра загружена!', 'success');
+                } catch (e) {
+                    console.error('Ошибка загрузки сохранения:', e);
+                    showNotification('Ошибка загрузки сохранения', 'error');
+                }
+            }
+        }
+
+        // Проекты на бирже
+        const projects = [
+            {
+                id: "simple_landing",
+                name: "Простой лендинг",
+                description: "Создание одностраничного сайта для малого бизнеса",
+                requiredLevel: 1,
+                energyCost: 20,
+                payment: 200,
+                xp: 10
+            },
+            {
+                id: "corporate_site",
+                name: "Корпоративный сайт",
+                description: "Разработка многостраничного сайта для компании",
+                requiredLevel: 2,
+                energyCost: 40,
+                payment: 500,
+                xp: 25
+            },
+            {
+                id: "online_store",
+                name: "Интернет-магазин",
+                description: "Создание полнофункционального интернет-магазина",
+                requiredLevel: 3,
+                energyCost: 60,
+                payment: 1000,
+                xp: 50
+            },
+            {
+                id: "web_app",
+                name: "Веб-приложение",
+                description: "Разработка сложного веб-приложения с базой данных",
+                requiredLevel: 4,
+                energyCost: 80,
+                payment: 2000,
+                xp: 100
+            },
+            {
+                id: "mobile_app",
+                name: "Мобильное приложение",
+                description: "Создание кроссплатформенного мобильного приложения",
+                requiredLevel: 5,
+                energyCost: 100,
+                payment: 5000,
+                xp: 200
+            }
+        ];
+
+        // Товары в магазине
+        const shopItems = [
+            {
+                id: "coffee",
+                name: "Кофе",
+                description: "Восстанавливает 20 энергии, дает +5 к продуктивности",
+                price: 50,
+                type: "consumable",
+                effect: { energy: 20, caffeine: 5 }
+            },
+            {
+                id: "energy_drink",
+                name: "Энергетик",
+                description: "Восстанавливает 40 энергии, дает +10 к продуктивности",
+                price: 80,
+                type: "consumable",
+                effect: { energy: 40, caffeine: 10, hp: -5 }
+            },
+            {
+                id: "healthy_food",
+                name: "Здоровая еда",
+                description: "Восстанавливает 15 HP и 10 энергии",
+                price: 100,
+                type: "consumable",
+                effect: { hp: 15, energy: 10 }
+            },
+            {
+                id: "programming_course",
+                name: "Курс программирования",
+                description: "Повышает навык программирования",
+                price: 300,
+                type: "skill",
+                effect: { xp: 30 }
+            },
+            {
+                id: "design_course",
+                name: "Курс дизайна",
+                description: "Повышает навык дизайна",
+                price: 250,
+                type: "skill",
+                effect: { xp: 25 }
+            },
+            {
+                id: "better_computer",
+                name: "Улучшенный компьютер",
+                description: "Повышает эффективность работы",
+                price: 1000,
+                type: "equipment",
+                effect: { maxEnergy: 10 }
+            },
+            {
+                id: "ergonomic_chair",
+                name: "Эргономичное кресло",
+                description: "Снижает усталость при работе",
+                price: 500,
+                type: "equipment",
+                effect: { maxHp: 10 }
+            }
+        ];
+
+        // Запуск игры при загрузке страницы
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

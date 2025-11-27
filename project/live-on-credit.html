@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Веб-Чародей: Жизнь в Кредите</title>
+  <style>
+    /* === Базовый пиксельный стиль === */
+    :root{
+      --bg:#0b1020;
+      --panel:#0e1828;
+      --accent:#7ad1ff;
+      --muted:#9fb0c8;
+      --pixel-font: "Courier New", monospace;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);font-family:var(--pixel-font);color:#e6f0ff}
+    *{box-sizing:border-box}
+
+    /* Центрирование контейнера */
+    #game{max-width:960px;margin:18px auto;padding:8px;position:relative}
+
+    /* Заглавный экран */
+    .title-screen{display:flex;flex-direction:column;align-items:center;gap:14px}
+    .game-title{font-size:36px;letter-spacing:2px}
+    .charslot{width:320px;height:320px;background:linear-gradient(180deg,#111827,#0a1220);display:flex;align-items:center;justify-content:center;border:4px solid #223344}
+    .menu{display:flex;gap:10px}
+    button{background:#132435;border:2px solid #234; padding:10px 14px;cursor:pointer;color:var(--accent);font-weight:700}
+    button:active{transform:translateY(1px)}
+
+    /* Внутриигровой UI */
+    .scene{position:relative;min-height:640px;border:4px solid #223344;background:linear-gradient(180deg,#061021,#081422);overflow:hidden}
+    .background-placeholder{position:absolute;inset:0;background:repeating-linear-gradient(45deg,#071226 0 6px,#061425 6px 12px);}
+
+    /* HUD (все элементы GUI должны иметь класс .gui) */
+    .gui{pointer-events:auto}
+    .hud{position:absolute;left:12px;top:12px;display:flex;gap:10px;align-items:center}
+    .hud .tile{background:#061827;border:2px solid #19303f;padding:6px 8px;border-radius:4px;min-width:80px}
+    .hud .tile .label{font-size:11px;color:var(--muted)}
+    .hud .tile .value{font-size:18px;font-weight:700}
+
+    .debuffs{display:flex;gap:6px}
+    .debuff{width:26px;height:26px;border:2px solid #282828;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+
+    /* Время сверху справа */
+    .time-tile{position:absolute;right:12px;top:12px;background:#061827;border:2px solid #19303f;padding:6px 10px;border-radius:4px}
+
+    /* Диалоговое окно снизу */
+    .dialog-wrap{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;width:92%;max-width:880px}
+    .dialog{background:linear-gradient(180deg,#071a2b,#04101a);border:3px solid #2b4b63;padding:12px;border-radius:8px;min-height:140px}
+    .speaker{font-weight:800;margin-bottom:6px}
+    .text{min-height:48px;white-space:pre-wrap}
+
+    /* Варианты ответов */
+    .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .choice{background:#0b2232;border:2px solid #2a5569;padding:8px;border-radius:6px;cursor:pointer}
+    .choice:hover{filter:brightness(1.12)}
+
+    /* Кнопки действий/квестов чуть выше диалога */
+    .actions{position:absolute;left:50%;transform:translateX(-50%);bottom:190px;width:92%;max-width:880px;display:flex;gap:8px;justify-content:center}
+    .action{background:#072231;padding:8px;border:2px solid #183140;border-radius:6px;cursor:pointer}
+
+    /* Счётчики полос */
+    .bar{height:10px;background:#082734;border:2px solid #163240;border-radius:6px;overflow:hidden}
+    .bar > i{display:block;height:100%;background:linear-gradient(90deg,#63c6ff,#7ad1ff);}
+
+    /* HUD правее */
+    .top-right{position:absolute;right:12px;top:60px}
+
+    /* Эффекты пиксельной четкости */
+    .pixelated{image-rendering:crisp-edges;image-rendering:pixelated}
+
+    /* Простые модалки */
+    .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--panel);border:3px solid #26374a;padding:16px;border-radius:6px;z-index:30;min-width:320px}
+    .modal.hidden{display:none}
+
+    /* Настройки */
+    .settings-list{display:flex;flex-direction:column;gap:8px}
+
+    /* Скрывать GUI: добавляем класс gui-hidden к body */
+    body.gui-hidden .gui{display:none}
+
+    /* Мелкая типографика */
+    small{color:var(--muted)}
+
+    /* Мобильная адаптация */
+    @media(max-width:600px){.scene{min-height:520px}.game-title{font-size:26px}.charslot{width:220px;height:220px}}
+  </style>
+</head>
+<body>
+  <div id="game">
+    <!-- Заглавный экран -->
+    <div id="titleScreen" class="title-screen">
+      <div class="game-title">ВЕБ-ЧАРОДЕЙ: ЖИЗНЬ В КРЕДИТЕ</div>
+      <div class="charslot gui">
+        <!-- сюда можно поместить портрет персонажа -->
+        <div style="text-align:center;color:var(--muted)">[портрет сюда]</div>
+      </div>
+      <div class="menu">
+        <button id="playBtn">PLAY</button>
+        <button id="readmeBtn">README.md</button>
+        <button id="settingsBtn">SETTINGS</button>
+      </div>
+      <small class="gui">Долг: <strong>300 000₽</strong> — Ваша цель: стать мастером веб-магии</small>
+    </div>
+
+    <!-- Сцена игры -->
+    <div id="scene" class="scene" style="display:none">
+      <div class="background-placeholder"></div>
+
+      <!-- HUD слева -->
+      <div class="hud gui">
+        <div class="tile gui gui--hud-hp">
+          <div class="label">HP</div>
+          <div class="value" id="hpVal">100</div>
+          <div class="bar" style="margin-top:6px"><i id="hpBar" style="width:100%"></i></div>
+        </div>
+        <div class="tile gui gui--hud-score">
+          <div class="label">SCORE</div>
+          <div class="value" id="scoreVal">0</div>
+        </div>
+        <div class="tile gui gui--hud-energy">
+          <div class="label">Энергия</div>
+          <div class="value" id="energyVal">100</div>
+          <div class="bar" style="margin-top:6px"><i id="energyBar" style="width:100%"></i></div>
+        </div>
+        <div class="debuffs gui" id="debuffs"></div>
+      </div>
+
+      <!-- Время сверху справа -->
+      <div class="time-tile gui" id="timeTile">Время: 0s</div>
+
+      <!-- Действия / квесты чуть выше диалога -->
+      <div class="actions gui" id="actions"></div>
+
+      <!-- Диалоговое окно -->
+      <div class="dialog-wrap gui">
+        <div class="dialog" id="dialog">
+          <div class="speaker" id="speaker"></div>
+          <div class="text" id="text"></div>
+          <div class="choices" id="choices"></div>
+        </div>
+      </div>
+
+      <!-- Кнопки управления (скрыть GUI, Сохранить) -->
+      <div style="position:absolute;left:12px;bottom:12px;display:flex;gap:6px" class="gui">
+        <button id="toggleGuiBtn">Скрыть GUI</button>
+        <button id="saveBtn">Сохранить</button>
+      </div>
+    </div>
+
+    <!-- Модалки -->
+    <div id="readmeModal" class="modal hidden">
+      <h3>README.md</h3>
+      <div style="max-height:300px;overflow:auto;font-size:14px">
+        <p>Это прототип визуальной новеллы на тему "жизнь в кредите". Вы — Макс, веб-чародей в должниках на 300 000₽. Ваша работа — изучать HTML/CSS/JS — это магия. Выполняйте заказы, улучшайте навыки и гасите долг.</p>
+        <ul>
+          <li>Сохраняется прогресс в localStorage под ключом <code>vn_credit_save_v1</code>.</li>
+          <li>Чтобы добавить ветки — редактируйте массив <code>DIALOGS</code> внизу файла. Каждый узел имеет id, text, speaker, choices.</li>
+          <li>Все GUI-элементы имеют базовый класс <code>.gui</code>. Чтобы скрыть GUI — нажмите кнопку "Скрыть GUI" (она добавит класс <code>gui-hidden</code> к body).</li>
+        </ul>
+      </div>
+      <div style="margin-top:10px;display:flex;justify-content:flex-end;gap:8px">
+        <button id="closeReadme">Закрыть</button>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="modal hidden">
+      <h3>Настройки</h3>
+      <div class="settings-list">
+        <label><input type="checkbox" id="sfxToggle" checked> Звуки интерфейса</label>
+        <label><input type="checkbox" id="autoSaveToggle" checked> Авто-сохранение</label>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+          <button id="clearProgress">Очистить прогресс</button>
+          <button id="closeSettings">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ----------------- Настройки и данные ----------------- */
+    const SAVE_KEY = 'vn_credit_save_v1';
+    const DEBT_TOTAL = 300000;
+
+    // Диалоги: масштабируемая структура. Каждый узел: id, speaker, text, choices[], actions, hpChange, energyChange, scoreChange, goto
+    const DIALOGS = [
+      {
+        id: 'start', speaker: 'Наратор', text: 'Ты имя Макс. Долг: 300 000₽. Единственный путь выбраться — стать веб-чародеем и зарабатывать на жизнь кодом. Что сделаешь?',
+        choices:[
+          {text:'Пойти на биржу фриланса',goto:'freelance_intro'},
+          {text:'Попытаться обойти кредиторов',goto:'bad_path'}
+        ]
+      },
+      {
+        id:'bad_path', speaker:'Кредитор', text:'Ты пытался уйти от выплат. Тебя нашли. Игра окончена.',
+        choices:[{text:'Принять поражение',goto:'game_over'}]
+      },
+      {
+        id:'freelance_intro', speaker:'Клиент: Нади', text:'Нужно сайт-визитка. Нужен простой HTML+CSS. Цена: 25 000₽. Берёшь?',
+        choices:[
+          {text:'Взять заказ',goto:'work_small',score:25000,energy:-10,hp:0},
+          {text:'Отказаться',goto:'start',score:0}
+        ]
+      },
+      {
+        id:'work_small', speaker:'Система', text:'Ты работаешь над версткой. Это тест навыков: пройти мини-испытание (авто-успех для примера).',
+        choices:[{text:'Завершить работу','goto':'finish_small'}]
+      },
+      {
+        id:'finish_small', speaker:'Нади', text:'Отлично, Макс! Вот твои деньги — 25 000₽.',
+        choices:[{text:'Продолжить',goto:'after_payment',score:25000}]
+      },
+      {
+        id:'after_payment', speaker:'Наратор', text:'Твой прогресс записан. Долг уменьшается.",',
+        choices:[{text:'Идти дальше',goto:'freelance_intro'}]
+      },
+      {
+        id:'game_over', speaker:'Система', text:'GAME OVER — вам не удалось выбраться из кредитов. Прогресс будет сброшен.',
+        choices:[{text:'Начать заново',goto:'reset_game'}]
+      },
+      {
+        id:'victory', speaker:'Система', text:'Поздравляю! Ты успешно выбрался из кредитов и теперь ты опытный веб-чародей, которому открыты все двери!',
+        choices:[{text:'Играть снова',goto:'reset_game'}]
+      }
+    ];
+
+    /* ----------------- Игровое состояние ----------------- */
+    let state = {
+      current: 'start',
+      hp:100, energy:100, score:0, debt:DEBT_TOTAL, debuffs:[], elapsed:0,
+      startTs:Date.now()
+    };
+
+    /* ----------------- Вспомогательные функции звуков (WebAudio) ----------------- */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let sfxOn = true;
+    function sfxBeep(freq=800, time=0.06){ if(!sfxOn) return; const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='square'; o.frequency.value=freq; g.gain.value=0.02; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+time); o.stop(audioCtx.currentTime+time); }
+
+    /* Типинг-эффект текста */
+    let typingTimer = null;
+    function typeText(node, str, speed=18, callback){
+      node.textContent=''; let i=0; if(typingTimer) clearInterval(typingTimer);
+      typingTimer = setInterval(()=>{ if(i<str.length){ node.textContent+=str[i++]; sfxBeep(1200,0.01) } else { clearInterval(typingTimer); typingTimer=null; if(callback) callback(); } }, speed);
+    }
+
+    /* ----------------- Сохранение и загрузка ----------------- */
+    function saveGame(){ const toSave = {...state, savedAt:Date.now()}; localStorage.setItem(SAVE_KEY, JSON.stringify(toSave)); flashMessage('Сохранено'); }
+    function loadGame(){ const raw = localStorage.getItem(SAVE_KEY); if(raw){ try{ const obj=JSON.parse(raw); Object.assign(state,obj); return true;}catch(e){console.error(e)} } return false }
+    function clearSave(){ localStorage.removeItem(SAVE_KEY); flashMessage('Прогресс удалён'); }
+
+    /* ----------------- UI обновления ----------------- */
+    const ids = {speaker:el('speaker'), text:el('text'), choices:el('choices'), hpVal:el('hpVal'), hpBar:el('hpBar'), energyVal:el('energyVal'), energyBar:el('energyBar'), scoreVal:el('scoreVal'), debuffs:el('debuffs'), timeTile:el('timeTile'), actions:el('actions')};
+
+    function el(id){return document.getElementById(id)}
+
+    function updateHUD(){ ids.hpVal.textContent = state.hp; ids.energyVal.textContent = state.energy; ids.scoreVal.textContent = state.score;
+      ids.hpBar.style.width = clamp(state.hp,0,100)+'%'; ids.energyBar.style.width = clamp(state.energy,0,100)+'%';
+      // дебафы
+      ids.debuffs.innerHTML=''; state.debuffs.forEach(d=>{const n=document.createElement('div');n.className='debuff';n.textContent=d;ids.debuffs.appendChild(n)})
+    }
+
+    function updateTime(){ state.elapsed = Math.floor((Date.now()-state.startTs)/1000); ids.timeTile.textContent = 'Время: '+state.elapsed+'s' }
+
+    function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+
+    /* ----------------- Диалоговая машина ----------------- */
+    function findNode(id){ return DIALOGS.find(d=>d.id===id) }
+
+    function applyNodeEffects(node){ if(!node) return; // обработка изменений очков
+      if(node.score) state.score += node.score;
+      if(node.hp) state.hp = clamp(state.hp + node.hp, 0, 100);
+      if(node.energy) state.energy = clamp(state.energy + node.energy, 0, 100);
+      // уменьшение долга при оплате (score используется как заработок)
+      if(node.score){ state.debt = Math.max(0, state.debt - node.score); }
+      if(state.debt===0){ goTo('victory'); }
+      if(state.hp<=0){ goTo('game_over'); }
+    }
+
+    function renderNode(id){ const node = findNode(id); if(!node) return; state.current = id; saveIfNeeded(); updateHUD(); // show speaker and type text
+      ids.speaker.textContent = node.speaker || '';
+      typeText(ids.text, node.text || '', 16, ()=>{});
+      // actions
+      renderActions(node);
+      // choices
+      ids.choices.innerHTML=''; (node.choices||[]).forEach((c,idx)=>{
+        const b = document.createElement('div'); b.className='choice gui'; b.textContent = (c.text||'вперед'); b.onclick = ()=>{ sfxBeep(900,0.04); // apply small changes
+          // apply immediate inline changes
+          if(c.score) state.score += c.score, state.debt = Math.max(0, state.debt - c.score);
+          if(typeof c.hp === 'number') state.hp = clamp(state.hp + c.hp,0,100);
+          if(typeof c.energy === 'number') state.energy = clamp(state.energy + c.energy,0,100);
+          if(c.debuff) state.debuffs.push(c.debuff);
+          // go to next
+          const next = c.goto || c.to;
+          if(next) goTo(next);
+        };
+        ids.choices.appendChild(b);
+      });
+      updateHUD();
+    }
+
+    function renderActions(node){ ids.actions.innerHTML=''; // пример действий, можно расширять
+      // Если есть временные квесты: добавим кнопки
+      const workBtn = document.createElement('div'); workBtn.className='action gui'; workBtn.textContent='Поработать (бонус)'; workBtn.onclick=()=>{ sfxBeep(1200,0.04); state.energy = clamp(state.energy-15,0,100); state.score += 5000; state.debt = Math.max(0,state.debt-5000); saveIfNeeded(); updateHUD(); flashMessage('+5000₽'); if(state.debt===0) goTo('victory'); }; ids.actions.appendChild(workBtn);
+    }
+
+    function goTo(id){ // отдельная функция, чтобы применять эффекты узла при входе
+      const node = findNode(id);
+      if(!node){ console.warn('node not found',id); return }
+      // apply node-level passive effects
+      applyNodeEffects(node);
+      // render
+      renderNode(id);
+    }
+
+    /* ----------------- События кнопок и init ----------------- */
+    document.getElementById('playBtn').addEventListener('click', ()=>{ document.getElementById('titleScreen').style.display='none'; document.getElementById('scene').style.display='block'; // load if exists
+      const loaded = loadGame(); if(loaded) { flashMessage('Загружено из сохранения'); } else { state.startTs = Date.now(); }
+      renderNode(state.current);
+      startTimer();
+    });
+    document.getElementById('readmeBtn').addEventListener('click', ()=>{ showModal('readmeModal') });
+    document.getElementById('settingsBtn').addEventListener('click', ()=>{ showModal('settingsModal') });
+    document.getElementById('closeReadme').addEventListener('click', ()=>{ hideModal('readmeModal') });
+    document.getElementById('closeSettings').addEventListener('click', ()=>{ hideModal('settingsModal') });
+
+    // настройки
+    document.getElementById('sfxToggle').addEventListener('change',(e)=>{ sfxOn = e.target.checked });
+    document.getElementById('autoSaveToggle').addEventListener('change',(e)=>{ autoSaveEnabled = e.target.checked });
+    document.getElementById('clearProgress').addEventListener('click', ()=>{ if(confirm('Удалить прогресс?')){ clearSave(); resetGame(); hideModal('settingsModal'); } });
+
+    document.getElementById('toggleGuiBtn').addEventListener('click', ()=>{ document.body.classList.toggle('gui-hidden'); const btn = document.getElementById('toggleGuiBtn'); btn.textContent = document.body.classList.contains('gui-hidden') ? 'Показать GUI' : 'Скрыть GUI'; });
+    document.getElementById('saveBtn').addEventListener('click', ()=>{ saveGame() });
+
+    /* ----------------- Таймер и авто-сохранение ----------------- */
+    let timerInterval=null; function startTimer(){ if(timerInterval) clearInterval(timerInterval); timerInterval = setInterval(()=>{ updateTime(); saveIfNeeded(); },1000) }
+    let autoSaveEnabled = true; function saveIfNeeded(){ if(autoSaveEnabled) saveGame(); }
+
+    /* ----------------- Малые утилиты ----------------- */
+    function showModal(id){ document.getElementById(id).classList.remove('hidden') }
+    function hideModal(id){ document.getElementById(id).classList.add('hidden') }
+
+    // Уведомления (микрофлеш)
+    function flashMessage(txt){ const n=document.createElement('div'); n.textContent=txt; n.style.position='fixed'; n.style.right='18px'; n.style.bottom='18px'; n.style.background='#072833'; n.style.padding='8px 12px'; n.style.border='2px solid #184d5f'; n.style.borderRadius='6px'; n.className='gui'; document.body.appendChild(n); setTimeout(()=>n.style.opacity='0.0',1500); setTimeout(()=>n.remove(),2200); }
+
+    /* ----------------- Сброс/рестарт ----------------- */
+    function resetGame(){ state = {current:'start', hp:100, energy:100, score:0, debt:DEBT_TOTAL, debuffs:[], elapsed:0, startTs:Date.now() }; clearSave(); renderNode('start'); }
+
+    /* ----------------- Инициализация при загрузке страницы ----------------- */
+    // Рендерит стартовый экран — кнопки и подсказки уже настроены
+
+    // Небольшая проверка: если есть сохранение, покажем подсказку
+    if(localStorage.getItem(SAVE_KEY)){
+      // оставляем стартовый экран, но можем подсказать
+      console.log('Сохранение обнаружено. Нажмите PLAY чтобы загрузить.');
+    }
+
+    // Позволим внешнему коду добавлять ветки: пример API
+    window.VN = { goTo, saveGame, loadGame, resetGame, state, DIALOGS };
+
+    // Авто-сохранение при выгрузке
+    window.addEventListener('beforeunload', ()=>{ saveGame(); });
+  </script>
+</body>
+</html>
